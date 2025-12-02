@@ -3,6 +3,7 @@ import logging
 import uuid
 import os
 import sys
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -19,6 +20,7 @@ logger.info("Startup: Checking environment variables...")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+PORT = int(os.getenv("PORT", 8000))
 
 if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
     logger.error("❌ FATAL: Credentials missing. Set BOT_TOKEN, SUPABASE_URL, SUPABASE_KEY.")
@@ -80,7 +82,7 @@ async def upload_photo(file_id: str) -> str:
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer("Городской Помощник v0.9.5 готов.", reply_markup=get_main_menu())
+    await message.answer("Городской Помощник v0.9.10 готов.", reply_markup=get_main_menu())
 
 @dp.message(F.text == "📂 Мои заявки")
 async def cmd_my_complaints(message: types.Message):
@@ -198,9 +200,24 @@ async def check_operator_replies():
         except Exception as e: logger.error(f"Loop error: {e}")
         await asyncio.sleep(5)
 
+# --- WEB SERVER FOR RENDER HEALTH CHECKS ---
+async def health_check(request):
+    return web.Response(text="OK")
+
+async def run_web_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    app.router.add_get("/health", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    logger.info(f"🌍 Web server started on port {PORT}")
+    await site.start()
+
 async def main():
-    asyncio.create_task(check_operator_replies())
-    await dp.start_polling(bot)
+    await run_web_server() # Start health check server
+    asyncio.create_task(check_operator_replies()) # Start operator reply loop
+    await dp.start_polling(bot) # Start bot
 
 if __name__ == "__main__": 
     try:
