@@ -95,7 +95,7 @@ const App: React.FC = () => {
           setNotification("База данных полностью очищена.");
           setTimeout(() => setNotification(null), 3000);
       } catch (e) {
-          alert("Ошибка удаления. Убедитесь, что вы выполнили SQL скрипт (отключение RLS).");
+          alert("Ошибка удаления. Возможно, нужно запустить SQL скрипт еще раз (отключение RLS).");
           console.error(e);
       } finally {
           setIsLoading(false);
@@ -162,7 +162,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
             {getHeaderIcon()}
             <h1 className="text-xl font-bold text-slate-800">
-              {currentView === 'dashboard' && 'Городской Помощник v0.9.5'}
+              {currentView === 'dashboard' && 'Городской Помощник v0.9.10'}
               {currentView === 'integration' && 'Администрирование'}
               {currentView === 'analytics' && 'Аналитика'}
             </h1>

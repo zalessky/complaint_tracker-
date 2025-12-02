@@ -125,7 +125,10 @@ export const sendOperatorMessage = async (ticketId: string, text: string, attach
 export const clearDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    // 1. Clear all complaints (requires RLS disabled)
+    // 1. Clear messages first (Foreign Key constraint)
+    await supabase.from('ticket_messages').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+    // 2. Clear complaints
     const { error } = await supabase.from('complaints').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
     
     if (error) {
@@ -137,7 +140,6 @@ export const clearDatabase = async () => {
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    // Insert fresh without deleting first (use clearDatabase for that)
     const rows = MOCK_TICKETS.map(t => ({
         user_id: parseInt(t.telegramUserId) || 12345,
         username: t.telegramUsername,
