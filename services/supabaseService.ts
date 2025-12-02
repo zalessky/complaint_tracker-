@@ -122,14 +122,22 @@ export const sendOperatorMessage = async (ticketId: string, text: string, attach
     await supabase.from('complaints').update({ status: 'in_work' }).eq('id', ticketId);
 };
 
+export const clearDatabase = async () => {
+    if (!supabase) throw new Error("Supabase not configured");
+    
+    // 1. Clear all complaints (requires RLS disabled)
+    const { error } = await supabase.from('complaints').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
+    
+    if (error) {
+        console.error("Delete failed", error);
+        throw new Error(error.message);
+    }
+};
+
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    // 1. Clear existing complaints to prevent duplicates and clean up broken data
-    const { error: deleteError } = await supabase.from('complaints').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Hack to delete all
-    if (deleteError) console.warn("Could not clear DB", deleteError);
-
-    // 2. Insert fresh
+    // Insert fresh without deleting first (use clearDatabase for that)
     const rows = MOCK_TICKETS.map(t => ({
         user_id: parseInt(t.telegramUserId) || 12345,
         username: t.telegramUsername,

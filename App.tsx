@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { Ticket, ViewMode } from './types';
 import { LayoutDashboard, Database, Wifi, BarChart2 } from 'lucide-react';
 import { MOCK_TICKETS } from './constants';
-import { initSupabase, fetchTickets, subscribeToTickets, updateTicketStatus, seedDatabase } from './services/supabaseService';
+import { initSupabase, fetchTickets, subscribeToTickets, updateTicketStatus, seedDatabase, clearDatabase } from './services/supabaseService';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -62,7 +62,10 @@ const App: React.FC = () => {
           if (errorMsg.includes('is_deleted') || errorMsg.includes('does not exist')) {
              setNotification("Требуется обновление БД! Запустите SQL скрипт.");
           } else {
-             setNotification(`Ошибка подключения: ${errorMsg}`);
+             // Suppress console spam for expected auth errors if keys are invalid
+             if(!errorMsg.includes('apikey')) {
+                 setNotification(`Ошибка подключения: ${errorMsg}`);
+             }
           }
           setIsLiveMode(false);
       } finally {
@@ -81,6 +84,24 @@ const App: React.FC = () => {
     }
   };
 
+  const handleClearData = async () => {
+      if (!isLiveMode) return;
+      if (!confirm("Вы уверены? Это удалит ВСЕ заявки из базы данных безвозвратно.")) return;
+
+      try {
+          setIsLoading(true);
+          await clearDatabase();
+          setTickets([]);
+          setNotification("База данных полностью очищена.");
+          setTimeout(() => setNotification(null), 3000);
+      } catch (e) {
+          alert("Ошибка удаления. Убедитесь, что вы выполнили SQL скрипт (отключение RLS).");
+          console.error(e);
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   const handleSeedData = async () => {
       if (!isLiveMode) return;
       try {
@@ -88,10 +109,10 @@ const App: React.FC = () => {
           await seedDatabase();
           const newTickets = await fetchTickets();
           setTickets(newTickets);
-          setNotification("Данные сброшены и обновлены!");
+          setNotification("Тестовые данные загружены!");
           setTimeout(() => setNotification(null), 3000);
       } catch (e) {
-          alert("Ошибка загрузки данных. Убедитесь, что вы выполнили новый SQL скрипт (миграции).");
+          alert("Ошибка загрузки данных. Проверьте консоль.");
           console.error(e);
       } finally {
           setIsLoading(false);
@@ -141,7 +162,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
             {getHeaderIcon()}
             <h1 className="text-xl font-bold text-slate-800">
-              {currentView === 'dashboard' && 'Городской Помощник v0.9.3'}
+              {currentView === 'dashboard' && 'Городской Помощник v0.9.5'}
               {currentView === 'integration' && 'Администрирование'}
               {currentView === 'analytics' && 'Аналитика'}
             </h1>
@@ -189,6 +210,7 @@ const App: React.FC = () => {
                 isConnected={isLiveMode} 
                 isLoading={isLoading} 
                 onSeedData={handleSeedData}
+                onClearData={handleClearData}
             />
           ) : (
              <div className="flex items-center justify-center h-full text-slate-400">

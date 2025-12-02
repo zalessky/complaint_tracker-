@@ -1,30 +1,31 @@
 
 import React, { useState } from 'react';
-import { Database, Copy, Terminal, FileText, Key, Dices } from 'lucide-react';
+import { Database, Copy, Terminal, FileText, Key, Dices, Trash2, Cloud, Server } from 'lucide-react';
 
 interface IntegrationViewProps {
     onConnect: (url: string, key: string) => void;
     isConnected: boolean;
     isLoading: boolean;
     onSeedData?: () => void;
+    onClearData?: () => void;
 }
 
-export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isConnected, isLoading, onSeedData }) => {
+export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isConnected, isLoading, onSeedData, onClearData }) => {
   const [url, setUrl] = useState('https://zjfgvvzyiutosaiuljuk.supabase.co');
   const [key, setKey] = useState('sb_publishable_iWKnzCb6R9iBI4KYYUZzww_-1qFPgn3');
   const [botToken, setBotToken] = useState('');
   
-  const [activeTab, setActiveTab] = useState<'sql' | 'bot' | 'deploy'>('bot');
+  const [activeTab, setActiveTab] = useState<'sql' | 'bot' | 'render'>('render');
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert("Скопировано в буфер обмена!");
   };
 
-  const sqlCode = `-- 1. Обновленная Схема (v0.9.3 Soft Delete + RLS Fix)
+  const sqlCode = `-- 1. Обновленная Схема (v0.9.5)
 -- Выполните в Supabase SQL Editor.
 
--- Отключаем RLS для демо-режима
+-- Отключаем RLS чтобы работала очистка базы
 ALTER TABLE complaints DISABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_messages DISABLE ROW LEVEL SECURITY;
 
@@ -101,7 +102,7 @@ DO $$ BEGIN
   END IF;
 END $$;`;
 
-  // Python Bot Code v0.9.4 (Added Feedback & Gratitude)
+  // Python Bot Code v0.9.5
   const botCode = `import asyncio
 import logging
 import uuid
@@ -113,7 +114,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from aiohttp import web
 
 load_dotenv()
 
@@ -124,10 +124,9 @@ logger.info("Startup: Checking environment variables...")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-PORT = int(os.getenv("PORT", 8000))
 
 if not BOT_TOKEN or not SUPABASE_URL or not SUPABASE_KEY:
-    logger.error("❌ FATAL: Credentials missing")
+    logger.error("❌ FATAL: Credentials missing. Set BOT_TOKEN, SUPABASE_URL, SUPABASE_KEY.")
     sys.exit(1)
 
 try:
@@ -186,7 +185,7 @@ async def upload_photo(file_id: str) -> str:
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer("Городской Помощник v0.9.4 готов.", reply_markup=get_main_menu())
+    await message.answer("Городской Помощник v0.9.5 готов.", reply_markup=get_main_menu())
 
 @dp.message(F.text == "📂 Мои заявки")
 async def cmd_my_complaints(message: types.Message):
@@ -304,21 +303,7 @@ async def check_operator_replies():
         except Exception as e: logger.error(f"Loop error: {e}")
         await asyncio.sleep(5)
 
-# --- WEB SERVER (HEALTH CHECK) ---
-async def health_check(request):
-    return web.Response(text="OK")
-
-async def start_web_server():
-    app = web.Application()
-    app.router.add_get('/', health_check)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', PORT)
-    await site.start()
-    logger.info(f"🌍 Web server started on port {PORT}")
-
 async def main():
-    await start_web_server()
     asyncio.create_task(check_operator_replies())
     await dp.start_polling(bot)
 
@@ -330,15 +315,40 @@ if __name__ == "__main__":
 
   const reqText = `aiogram==3.17.0
 supabase==2.11.0
-python-dotenv==1.0.1
-aiohttp==3.9.3`;
+python-dotenv==1.0.1`;
 
-  const procText = `worker: python main.py`;
+  const renderGuide = `
+# Инструкция по деплою на Render.com
 
-  const envText = `BOT_TOKEN=${botToken}
-SUPABASE_URL=${url}
-SUPABASE_KEY=${key}
-PORT=8000`;
+Этот проект состоит из двух частей:
+1. React Frontend (Этот сайт)
+2. Python Bot (Бэкграунд воркер)
+
+Вы можете задеплоить их в одном репозитории.
+
+## 1. Подготовка файлов
+В корне вашего репозитория создайте папку "bot" и положите туда два файла:
+- bot/main.py (Код из соседней вкладки)
+- bot/requirements.txt (Код из соседней вкладки)
+
+## 2. Настройка Render.com для Бота
+1. Создайте новый "Background Worker".
+2. Подключите ваш GitHub репозиторий.
+3. В настройках:
+   - Root Directory: bot
+   - Build Command: pip install -r requirements.txt
+   - Start Command: python main.py
+4. Добавьте Environment Variables:
+   - BOT_TOKEN = Ваш токен
+   - SUPABASE_URL = URL базы
+   - SUPABASE_KEY = Ключ базы
+
+## 3. Настройка Render.com для Сайта (Frontend)
+1. Создайте новый "Static Site".
+2. Build Command: npm run build
+3. Publish Directory: dist
+4. Добавьте Environment Variables (если нужно).
+`;
 
   return (
     <div className="h-full overflow-y-auto p-8 bg-slate-50">
@@ -346,12 +356,22 @@ PORT=8000`;
         <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold text-slate-900">Администрирование</h2>
             
-            {/* Seed Data Button */}
-            {isConnected && onSeedData && (
-                <button onClick={onSeedData} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-all active:scale-95">
-                    <Dices size={18} />
-                    ♻️ Сброс и загрузка данных
-                </button>
+            {/* Action Buttons */}
+            {isConnected && (
+                <div className="flex gap-2">
+                    {onClearData && (
+                        <button onClick={onClearData} className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-all active:scale-95 border border-red-200">
+                            <Trash2 size={18} />
+                            Удалить ВСЕ заявки
+                        </button>
+                    )}
+                    {onSeedData && (
+                        <button onClick={onSeedData} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-all active:scale-95">
+                            <Dices size={18} />
+                            Загрузить тестовые
+                        </button>
+                    )}
+                </div>
             )}
         </div>
 
@@ -379,41 +399,33 @@ PORT=8000`;
 
         {/* Tabs */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-             <button onClick={()=>setActiveTab('bot')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap ${activeTab==='bot'?'bg-emerald-600 text-white':'bg-white text-slate-600'}`}>Код Бота (main.py)</button>
-             <button onClick={()=>setActiveTab('sql')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap ${activeTab==='sql'?'bg-indigo-600 text-white':'bg-white text-slate-600'}`}>SQL Схема</button>
-             <button onClick={()=>setActiveTab('deploy')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap ${activeTab==='deploy'?'bg-amber-600 text-white':'bg-white text-slate-600'}`}>Файлы для Деплоя</button>
+             <button onClick={()=>setActiveTab('render')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 ${activeTab==='render'?'bg-black text-white':'bg-white text-slate-600'}`}><Cloud size={16}/> Render.com (Деплой)</button>
+             <button onClick={()=>setActiveTab('bot')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 ${activeTab==='bot'?'bg-emerald-600 text-white':'bg-white text-slate-600'}`}><Terminal size={16}/> Код Бота</button>
+             <button onClick={()=>setActiveTab('sql')} className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-2 ${activeTab==='sql'?'bg-indigo-600 text-white':'bg-white text-slate-600'}`}><Database size={16}/> SQL Схема</button>
         </div>
 
         <div className="flex flex-col h-[500px] bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="p-4 border-b bg-slate-50 flex justify-between items-center">
                 <span className="font-bold text-slate-700 flex gap-2 items-center">
-                   {activeTab==='bot' && <Terminal size={18}/>}
-                   {activeTab==='sql' && <Database size={18}/>}
-                   {activeTab==='deploy' && <FileText size={18}/>}
-                   {activeTab==='bot'?'Код Бота (C веб-сервером для Koyeb)':activeTab==='sql'?'SQL (Безопасная миграция)': 'Файлы проекта'}
+                   {activeTab==='render'?'Инструкция по Деплою': activeTab==='bot'?'bot/main.py': 'SQL Миграция'}
                 </span>
-                <button onClick={()=>copyToClipboard(activeTab==='bot'?botCode:activeTab==='sql'?sqlCode:envText)} className="text-xs text-indigo-600 font-bold flex items-center gap-1 hover:underline">
+                <button onClick={()=>copyToClipboard(activeTab==='bot'?botCode:activeTab==='sql'?sqlCode:renderGuide)} className="text-xs text-indigo-600 font-bold flex items-center gap-1 hover:underline">
                     <Copy size={14}/> Копировать
                 </button>
             </div>
             
             <pre className="flex-1 bg-slate-900 text-slate-300 p-4 text-xs font-mono overflow-auto whitespace-pre-wrap leading-relaxed">
-                {activeTab === 'bot' && botCode}
-                {activeTab === 'sql' && sqlCode}
-                {activeTab === 'deploy' && (
+                {activeTab === 'bot' && (
 <>
-<strong className="text-amber-400"># requirements.txt</strong>
+<strong className="text-emerald-400"># bot/main.py</strong>
+{botCode}
+<br/><br/>
+<strong className="text-amber-400"># bot/requirements.txt</strong>
 {reqText}
-
-<br/><br/>
-<strong className="text-amber-400"># Procfile</strong>
-{procText}
-
-<br/><br/>
-<strong className="text-emerald-400"># .env (Не добавлять в Git, для локальной разработки)</strong>
-{envText}
 </>
                 )}
+                {activeTab === 'sql' && sqlCode}
+                {activeTab === 'render' && renderGuide}
             </pre>
         </div>
 

@@ -113,178 +113,162 @@ export const STATUS_CONFIG = {
 
 export const MOCK_TICKETS: Ticket[] = [
   {
-    id: 't-mock-1',
+    id: 't-new-1',
     telegramUserId: '445566',
-    telegramUsername: '@citizen_one',
-    contactPhone: '+79001234567',
+    telegramUsername: '@ivan_citizen',
+    contactPhone: '+79170001122',
     category: 'Дороги',
     subCategory: 'Яма на дороге',
-    location: 'ул. Тельмана, д. 45',
-    originalMessage: "Глубокая яма прямо на пешеходном переходе. Можно ноги переломать! Асфальт провалился после дождя.",
+    location: 'ул. Коммунистическая, 12',
+    originalMessage: "Огромная яма на выезде со двора. Машины бьются днищем.",
     status: 'new',
     priority: 'high',
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     attachments: [
-        { id: 'm1', type: 'image', url: 'https://picsum.photos/seed/road/800/600', name: 'construction.jpg' }
+        { id: 'm1', type: 'image', url: 'https://picsum.photos/seed/pothole/800/600', name: 'road.jpg' }
     ],
     history: []
   },
   {
-    id: 't-mock-2',
-    telegramUserId: '998877',
-    telegramUsername: '@bus_rider',
-    contactPhone: '+79051112233',
-    category: 'Транспорт',
-    subCategory: 'Нарушение графика',
-    location: 'Остановка "Ярмарка"',
-    originalMessage: "Автобус 284 не пришел по расписанию в 8:15. Следующий был битком, не влезть. Люди мерзнут!",
-    extraData: { routeNumber: '284', vehicleNumber: '?' },
-    status: 'in_work',
+    id: 't-new-2',
+    telegramUserId: '556677',
+    telegramUsername: '@anna_park',
+    contactPhone: '+79053334455',
+    category: 'Благоустройство',
+    subCategory: 'Сломаны лавочки',
+    location: 'Парк "Покровский"',
+    originalMessage: "Вандалы сломали две скамейки возле фонтана. Торчат гвозди, опасно для детей.",
+    status: 'new',
     priority: 'medium',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     attachments: [
-        { id: 'm2', type: 'image', url: 'https://picsum.photos/seed/bus/800/600', name: 'bus.jpg' }
-    ],
-    history: [
-        { id: 'h1', sender: 'operator', text: 'Запрос отправлен диспетчеру МУП "Энгельсэлектротранс".', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() }
-    ]
-  },
-  {
-    id: 't-mock-3',
-    telegramUserId: '112233',
-    telegramUsername: '@eco_guard',
-    contactPhone: '+79990001122',
-    category: 'Мусор',
-    subCategory: 'Свалка',
-    location: 'За гаражами на Степной',
-    originalMessage: "Стихийная свалка строительного мусора. Кто-то вывалил целую газель старых окон и кирпичей.",
-    status: 'new',
-    priority: 'critical',
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    attachments: [
-        { id: 'm3', type: 'image', url: 'https://picsum.photos/seed/trash/800/600', name: 'trash.jpg' }
+        { id: 'm2', type: 'image', url: 'https://picsum.photos/seed/bench/800/600', name: 'bench.jpg' }
     ],
     history: []
   },
   {
-    id: 't-mock-4',
-    telegramUserId: '334455',
-    telegramUsername: '@warm_home',
-    contactPhone: '89170000000',
-    category: 'Отопление',
-    subCategory: 'Холодно в квартире',
-    location: 'Полтавская 32, кв 15',
-    originalMessage: "Батареи чуть теплые, дома +18. УК заявку игнорирует уже третий день.",
-    status: 'clarification_needed',
-    priority: 'high',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    attachments: [],
-    history: [
-         { id: 'h2', sender: 'operator', text: 'Укажите, пожалуйста, проводили ли вы замеры температуры воздуха в помещении?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString() }
-    ]
+    id: 't-new-3',
+    telegramUserId: '998811',
+    telegramUsername: '@bus_user_77',
+    contactPhone: '',
+    category: 'Транспорт',
+    subCategory: 'Грязный салон',
+    location: 'Маршрут 284Б',
+    originalMessage: "В салоне автобуса невыносимая грязь, сиденья пыльные, кондуктор хамит.",
+    extraData: { routeNumber: '284Б', vehicleNumber: 'А 123 АА 164' },
+    status: 'in_work',
+    priority: 'low',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    attachments: [
+        { id: 'm3', type: 'image', url: 'https://picsum.photos/seed/bus_dirty/800/600', name: 'bus.jpg' }
+    ],
+    history: []
   },
   {
-    id: 't-mock-5',
-    telegramUserId: '777111',
-    telegramUsername: '@driver_pro',
-    contactPhone: '',
+    id: 't-new-4',
+    telegramUserId: '112233',
+    telegramUsername: '@svetlana_jkh',
+    contactPhone: '+79270009988',
     category: 'ЖКХ',
     subCategory: 'Открытый люк',
-    location: 'Перекресток Тельмана и Волоха',
-    originalMessage: "Открытый колодец прямо на проезжей части! Воткнул ветку, но ночью не видно. Срочно примите меры!",
+    location: 'ул. Тельмана, напротив школы 1',
+    originalMessage: "Люк открыт уже неделю! Дети идут в школу и могут упасть.",
     status: 'resolved',
     priority: 'critical',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     attachments: [
-        { id: 'm5', type: 'image', url: 'https://picsum.photos/seed/hole/800/600', name: 'manhole.jpg' }
+        { id: 'm4', type: 'image', url: 'https://picsum.photos/seed/manhole/800/600', name: 'hole.jpg' }
     ],
     history: [
-         { id: 'h3', sender: 'operator', text: 'Передано аварийной бригаде Водоканала.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 47).toISOString() },
-         { id: 'h4', sender: 'operator', text: 'Люк закрыт. Спасибо за обращение.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 40).toISOString() }
+        { id: 'h1', sender: 'operator', text: 'Заявка передана в Водоканал.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 23).toISOString() },
+        { id: 'h2', sender: 'operator', text: 'Люк закрыт. Спасибо за сигнал.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString() }
     ]
   },
   {
-    id: 't-mock-6',
-    telegramUserId: '555000',
-    telegramUsername: '@dog_lover',
+    id: 't-new-5',
+    telegramUserId: '777888',
+    telegramUsername: '@dog_help',
     contactPhone: '',
     category: 'Животные',
     subCategory: 'Стая бездомных собак',
-    location: 'Детская площадка во дворе школы №1',
-    originalMessage: "Агрессивные собаки (5-6 штук) пугают детей. Одна с биркой, остальные без.",
+    location: 'Летка, возле магазина Магнит',
+    originalMessage: "Агрессивная стая собак, 6-7 особей. Лают на прохожих.",
     status: 'measures_taken',
-    priority: 'medium',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    attachments: [
-         { id: 'm6', type: 'image', url: 'https://picsum.photos/seed/dogs/800/600', name: 'dog.jpg' }
-    ],
-    history: [],
-    notes: 'Передано в службу отлова. Выезд запланирован на 20.10.'
-  },
-  {
-    id: 't-mock-7',
-    telegramUserId: '888000',
-    telegramUsername: '@angry_citizen',
-    contactPhone: '+79270009988',
-    category: 'Фасады и крыши',
-    subCategory: 'Сосульки/Снег на крыше',
-    location: 'ул. Горького, 14',
-    originalMessage: "Огромные сосульки висят прямо над входом в подъезд! Ждем беды?",
-    status: 'new',
     priority: 'high',
-    createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
     attachments: [
-         { id: 'm7', type: 'image', url: 'https://picsum.photos/seed/snow/800/600', name: 'snow.jpg' }
+        { id: 'm5', type: 'image', url: 'https://picsum.photos/seed/dogs/800/600', name: 'dogs.jpg' }
     ],
     history: []
   },
   {
-    id: 't-mock-9',
-    telegramUserId: '121212',
-    telegramUsername: '@night_walker',
+    id: 't-new-6',
+    telegramUserId: '333444',
+    telegramUsername: '@night_city',
     contactPhone: '',
     category: 'Освещение',
     subCategory: 'Не горит фонарь',
-    location: 'Аллея Героев',
-    originalMessage: "Половина фонарей не работает уже неделю. Темно ходить.",
+    location: 'Набережная, 2 ярус',
+    originalMessage: "Не горят три фонаря подряд. Очень темно гулять.",
     status: 'new',
     priority: 'medium',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
     attachments: [
-        { id: 'm9', type: 'image', url: 'https://picsum.photos/seed/light/800/600', name: 'light.jpg' }
+        { id: 'm6', type: 'image', url: 'https://picsum.photos/seed/nightlight/800/600', name: 'light.jpg' }
     ],
     history: []
   },
   {
-    id: 't-mock-10',
-    telegramUserId: '333999',
-    telegramUsername: '@water_leak',
-    contactPhone: '+79033334444',
-    category: 'Водоснабжение',
-    subCategory: 'Прорыв трубы',
-    location: 'Коломенская, 5',
-    originalMessage: "Из под земли бьет фонтан воды! Заливает двор.",
+    id: 't-new-7',
+    telegramUserId: '222111',
+    telegramUsername: '@trash_monitor',
+    contactPhone: '+79008887766',
+    category: 'Мусор',
+    subCategory: 'Невывоз мусора',
+    location: 'Волоха, 15',
+    originalMessage: "Мусор не вывозят уже 4 дня. Баки переполнены, запах на весь двор.",
+    status: 'clarification_needed',
+    priority: 'high',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    attachments: [
+        { id: 'm7', type: 'image', url: 'https://picsum.photos/seed/garbage/800/600', name: 'trash.jpg' }
+    ],
+    history: [
+        { id: 'h3', sender: 'operator', text: 'Уточните, пожалуйста, доступ к площадке не перекрыт припаркованными авто?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() }
+    ]
+  },
+  {
+    id: 't-new-8',
+    telegramUserId: '555444',
+    telegramUsername: '@graffiti_hater',
+    contactPhone: '',
+    category: 'Фасады и крыши',
+    subCategory: 'Граффити',
+    location: 'Стена гимназии №8',
+    originalMessage: "Вандалы разрисовали фасад школы рекламой наркотиков. Срочно закрасьте!",
     status: 'new',
     priority: 'critical',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     attachments: [
-        { id: 'm10', type: 'image', url: 'https://picsum.photos/seed/leak/800/600', name: 'leak.jpg' }
+        { id: 'm8', type: 'image', url: 'https://picsum.photos/seed/wall/800/600', name: 'graffiti.jpg' }
     ],
     history: []
   },
   {
-    id: 't-mock-11',
-    telegramUserId: '424242',
-    telegramUsername: '@grateful_user',
+    id: 't-new-9',
+    telegramUserId: '666999',
+    telegramUsername: '@water_leak_2',
     contactPhone: '',
-    category: 'Благодарность',
-    subCategory: '✅ Благодарность',
-    location: '',
-    originalMessage: "Хочу сказать спасибо бригаде, которая вчера быстро починила свет на Ленина! Очень оперативно.",
-    status: 'resolved',
-    priority: 'low',
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    attachments: [],
+    category: 'Водоснабжение',
+    subCategory: 'Прорыв трубы',
+    location: 'Петровская, 55',
+    originalMessage: "Течет вода из колодца, заливает тротуар.",
+    status: 'in_work',
+    priority: 'high',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+    attachments: [
+        { id: 'm9', type: 'image', url: 'https://picsum.photos/seed/water_leak/800/600', name: 'water.jpg' }
+    ],
     history: []
   }
 ];
