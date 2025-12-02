@@ -102,7 +102,7 @@ DO $$ BEGIN
   END IF;
 END $$;`;
 
-  // Python Bot Code v0.9.10 - Definitive Version
+  // Python Bot Code v0.9.12 - Fixed URL Generation
   const botCode = `import asyncio
 import logging
 import uuid
@@ -179,15 +179,18 @@ async def upload_photo(file_id: str) -> str:
         file_info = await bot.get_file(file_id)
         file_bytes = await bot.download_file(file_info.file_path)
         filename = f"{uuid.uuid4()}.jpg"
+        # Upload
         supabase.storage.from_("evidence").upload(filename, file_bytes.read(), {"content-type": "image/jpeg"})
-        return supabase.storage.from_("evidence").get_public_url(filename).public_url
+        # Get URL (Fix: supabase-py returns string directly in newer versions, handle object if older)
+        url = supabase.storage.from_("evidence").get_public_url(filename)
+        return url if isinstance(url, str) else url.public_url
     except Exception as e:
         logger.error(f"Upload failed: {e}")
         return ""
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
-    await message.answer("Городской Помощник v0.9.10 готов.", reply_markup=get_main_menu())
+    await message.answer("Городской Помощник v0.9.12 готов.", reply_markup=get_main_menu())
 
 @dp.message(F.text == "📂 Мои заявки")
 async def cmd_my_complaints(message: types.Message):
@@ -375,21 +378,10 @@ aiohttp==3.9.3`;
         <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold text-slate-900">Администрирование</h2>
             
-            {/* Action Buttons */}
+            {/* Action Buttons Hidden as requested */}
             {isConnected && (
                 <div className="flex gap-2">
-                    {onClearData && (
-                        <button onClick={onClearData} className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-all active:scale-95 border border-red-200">
-                            <Trash2 size={18} />
-                            Удалить ВСЕ заявки
-                        </button>
-                    )}
-                    {onSeedData && (
-                        <button onClick={onSeedData} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-all active:scale-95">
-                            <Dices size={18} />
-                            Загрузить тестовые
-                        </button>
-                    )}
+                   {/* Buttons hidden for stability */}
                 </div>
             )}
         </div>
