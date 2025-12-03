@@ -1,9 +1,11 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Ticket, TicketStatus, ChatMessage, Attachment } from '../types';
 import { MOCK_TICKETS } from '../constants';
 
 let supabase: SupabaseClient | null = null;
+
+// TODO: Set this to your deployed Render URL
+const BOT_PROXY_URL = "https://YOUR_BOT_APP.onrender.com"; 
 
 export const initSupabase = (url: string, key: string) => {
   supabase = createClient(url, key);
@@ -30,6 +32,23 @@ export const uploadFile = async (file: File): Promise<string> => {
 
 // Map DB row to Frontend Ticket
 const mapRowToTicket = (row: any): Ticket => {
+  // Logic to handle images:
+  // 1. If it's a URL (http...), use it directly (Mock data or Operator uploads)
+  // 2. If it's a file_id (no http), construct Proxy URL
+  
+  const mapPhoto = (idOrUrl: string, idx: number) => {
+      let url = idOrUrl;
+      if (!url.startsWith('http')) {
+          url = `${BOT_PROXY_URL}/images/${idOrUrl}`;
+      }
+      return {
+        id: `ph-${idx}`,
+        type: 'image',
+        url: url, 
+        name: `Фото ${idx+1}`
+      };
+  };
+
   return {
     id: row.id,
     telegramUserId: row.user_id?.toString() || 'Unknown',
@@ -44,12 +63,7 @@ const mapRowToTicket = (row: any): Ticket => {
     priority: row.priority || 'medium',
     isDeleted: row.is_deleted || false,
     createdAt: row.created_at,
-    attachments: (row.photos || []).map((url: string, idx: number) => ({
-        id: `ph-${idx}`,
-        type: 'image',
-        url: url, 
-        name: `Фото ${idx+1}`
-    })),
+    attachments: (row.photos || []).map(mapPhoto),
     history: []
   };
 };
@@ -57,7 +71,6 @@ const mapRowToTicket = (row: any): Ticket => {
 export const fetchTickets = async (): Promise<Ticket[]> => {
   if (!supabase) throw new Error("Supabase not configured");
 
-  // Only fetch not deleted
   const { data, error } = await supabase
     .from('complaints')
     .select('*')
@@ -111,7 +124,6 @@ export const softDeleteTicket = async (id: string) => {
 export const sendOperatorMessage = async (ticketId: string, text: string, attachments: string[] = []) => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    // 1. Add message
     await supabase.from('ticket_messages').insert({
         ticket_id: ticketId,
         sender: 'operator',
@@ -124,22 +136,13 @@ export const sendOperatorMessage = async (ticketId: string, text: string, attach
 
 export const clearDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
-    
-    // 1. Clear messages first (Foreign Key constraint)
     await supabase.from('ticket_messages').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-    // 2. Clear complaints
     const { error } = await supabase.from('complaints').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
-    
-    if (error) {
-        console.error("Delete failed", error);
-        throw new Error(error.message);
-    }
+    if (error) throw new Error(error.message);
 };
 
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
-    
     const rows = MOCK_TICKETS.map(t => ({
         user_id: parseInt(t.telegramUserId) || 12345,
         username: t.telegramUsername,
@@ -155,7 +158,6 @@ export const seedDatabase = async () => {
         is_deleted: false,
         created_at: t.createdAt
     }));
-
     const { error } = await supabase.from('complaints').insert(rows);
     if (error) throw error;
 };
