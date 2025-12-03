@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Ticket, TicketStatus, ChatMessage, Priority } from '../types';
 import { X, Send, User, Calendar, MessageSquare, MapPin, Tag, Paperclip, AlertCircle, Loader2, Bus, CreditCard, ChevronDown, UploadCloud, ChevronLeft, ChevronRight, Phone, Trash2 } from 'lucide-react';
-import { sendOperatorMessage, fetchTicketHistory, uploadFile, updateTicketPriority, softDeleteTicket } from '../services/supabaseService';
+import { sendReplyViaBot, fetchTicketHistory, updateTicketStatus, updateTicketPriority, softDeleteTicket } from '../services/supabaseService';
 import { CATEGORIES, PRIORITY_LABELS, STATUS_CONFIG } from '../constants';
 
 interface TicketModalProps {
@@ -21,6 +20,11 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
 
   // Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
+  // Collect all images (ticket attachments + history attachments)
+  const allImages = [
+      ...(ticket.attachments || []).map(a => ({...a, source: 'ticket'})),
+      ...(localHistory.flatMap(m => m.attachments || [])).map(a => ({...a, source: 'chat'}))
+  ];
 
   useEffect(() => {
      if (ticket.id.length > 10 && !ticket.id.startsWith('t-mock')) { 
@@ -43,20 +47,22 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
 
       setIsUploading(true);
       try {
-          const url = await uploadFile(file);
-          await sendOperatorMessage(ticket.id, "Отправлено фото", [url]);
+          // Send via Bot API
+          await sendReplyViaBot(ticket.id, "Отправлено фото", file);
           
+          // Optimistic update
+          const tempUrl = URL.createObjectURL(file);
           const newMessage: ChatMessage = {
               id: Date.now().toString(),
               sender: 'operator',
               text: "Отправлено фото",
-              attachments: [{ id: 'new', type: 'image', url: url, name: file.name }],
+              attachments: [{ id: 'new', type: 'image', url: tempUrl, name: file.name }],
               timestamp: new Date().toISOString()
           };
           setLocalHistory(prev => [...prev, newMessage]);
           onUpdate({ ...ticket, status: 'in_work' });
       } catch (err) {
-          alert("Ошибка загрузки файла");
+          alert("Ошибка отправки. Проверьте URL бота в настройках.");
           console.error(err);
       } finally {
           setIsUploading(false);
@@ -69,7 +75,6 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
       if (file) await processFile(file);
   };
 
-  // Drag and Drop Handlers
   const handleDragOver = (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(true);
@@ -114,17 +119,20 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
 
       if (ticket.id.length > 10 && !ticket.id.startsWith('t-mock')) {
           try {
-            await sendOperatorMessage(ticket.id, textToSend);
+            await sendReplyViaBot(ticket.id, textToSend);
             onUpdate({ ...ticket, status: 'in_work' });
           } catch (e) {
-              alert("Ошибка отправки. Проверьте соединение.");
+              alert("Ошибка отправки. Проверьте URL бота.");
               console.error(e);
           }
       }
   }
 
-  const changeStatus = (newStatus: TicketStatus) => {
+  const changeStatus = async (newStatus: TicketStatus) => {
       onUpdate({ ...ticket, status: newStatus });
+      if (ticket.id.length > 10 && !ticket.id.startsWith('t-mock')) {
+          await updateTicketStatus(ticket.id, newStatus);
+      }
   }
 
   const changePriority = async (newPriority: Priority) => {
@@ -139,8 +147,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
           if (ticket.id.length > 10 && !ticket.id.startsWith('t-mock')) {
               await softDeleteTicket(ticket.id);
           }
-          // Update UI to remove it locally or refresh
-          onUpdate({ ...ticket, isDeleted: true }); // Parent should filter this out
+          onUpdate({ ...ticket, isDeleted: true }); 
           onClose();
       }
   }
@@ -156,33 +163,36 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
   const catKey = Object.keys(CATEGORIES).find(key => CATEGORIES[key as keyof typeof CATEGORIES].name === ticket.category);
   const categoryEmoji = catKey ? CATEGORIES[catKey as keyof typeof CATEGORIES].emoji : '';
 
+  const openLightbox = (url: string) => {
+      const idx = allImages.findIndex(img => img.url === url);
+      if (idx !== -1) setLightboxIndex(idx);
+  };
+
   const nextImage = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!ticket.attachments) return;
-      setLightboxIndex((prev) => (prev + 1) % ticket.attachments!.length);
+      setLightboxIndex((prev) => (prev + 1) % allImages.length);
   };
   const prevImage = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!ticket.attachments) return;
-      setLightboxIndex((prev) => (prev - 1 + ticket.attachments!.length) % ticket.attachments!.length);
+      setLightboxIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       {/* Lightbox Overlay */}
-      {lightboxIndex >= 0 && ticket.attachments && (
+      {lightboxIndex >= 0 && allImages.length > 0 && (
           <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4" onClick={() => setLightboxIndex(-1)}>
-              <button className="absolute top-4 right-4 text-white hover:text-gray-300">
+              <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-50">
                   <X size={32} />
               </button>
               
               <img 
-                 src={ticket.attachments[lightboxIndex].url} 
+                 src={allImages[lightboxIndex].url} 
                  className="max-h-[90vh] max-w-[90vw] object-contain" 
                  onClick={(e) => e.stopPropagation()}
               />
               
-              {ticket.attachments.length > 1 && (
+              {allImages.length > 1 && (
                   <>
                     <button className="absolute left-4 text-white hover:bg-white/10 p-2 rounded-full" onClick={prevImage}>
                         <ChevronLeft size={48} />
@@ -191,7 +201,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                         <ChevronRight size={48} />
                     </button>
                     <div className="absolute bottom-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-                        {lightboxIndex + 1} / {ticket.attachments.length}
+                        {lightboxIndex + 1} / {allImages.length}
                     </div>
                   </>
               )}
@@ -239,7 +249,6 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Статус</label>
                 <div className="grid grid-cols-2 gap-2">
                     {Object.entries(STATUS_CONFIG).map(([id, config]) => {
-                        // Extract style name from class string (e.g. 'bg-red-100' -> 'red')
                         const style = config.color.split('-')[1]; 
                         return (
                          <button 
@@ -276,7 +285,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                     )}
                 </div>
 
-                {/* Extra Data for Transport etc */}
+                {/* Extra Data */}
                 {ticket.extraData && (
                     <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 shadow-sm">
                          {ticket.extraData.routeNumber && (
@@ -335,7 +344,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                 </div>
             </div>
             
-             {/* Attachments Gallery */}
+             {/* Ticket Photos */}
             {ticket.attachments && ticket.attachments.length > 0 && (
                 <div className="space-y-3">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Фото ({ticket.attachments.length})</label>
@@ -343,17 +352,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                         {ticket.attachments.map((att, idx) => (
                              <div 
                                 key={idx} 
-                                onClick={() => setLightboxIndex(idx)}
+                                onClick={() => openLightbox(att.url)}
                                 className="aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative group cursor-pointer hover:ring-2 hover:ring-indigo-500"
                              >
-                                 {att.url !== '#' ? (
-                                    <img src={att.url} alt="Evidence" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                 ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 p-2 text-center">
-                                        <AlertCircle size={20} className="mb-1" />
-                                        <span className="text-[10px]">Загружается...</span>
-                                    </div>
-                                 )}
+                                <img src={att.url} alt="Evidence" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                              </div>
                         ))}
                     </div>
@@ -397,7 +399,6 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
           {/* Chat Content */}
           <div className="flex-1 overflow-y-auto p-8 bg-white">
               
-              {/* Original Request Box */}
               <div className="mb-8 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
                   <div className="flex items-center gap-2 mb-2 text-indigo-800 text-sm font-bold">
                       <MessageSquare className="w-4 h-4" />
@@ -408,7 +409,6 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                   </div>
               </div>
 
-              {/* History */}
               {loadingHistory ? (
                   <div className="flex justify-center py-8">
                       <Loader2 className="animate-spin text-indigo-600" />
@@ -427,7 +427,13 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                                     {msg.attachments && msg.attachments.length > 0 && (
                                         <div className="mt-2 space-y-2">
                                             {msg.attachments.map((att, i) => (
-                                                <img key={i} src={att.url} className="rounded-lg max-w-full max-h-40 border border-white/20 bg-black/10 cursor-pointer" onClick={() => window.open(att.url, '_blank')} alt="attachment" />
+                                                <img 
+                                                    key={i} 
+                                                    src={att.url} 
+                                                    className="rounded-lg max-w-full max-h-40 border border-white/20 bg-black/10 cursor-pointer hover:opacity-90" 
+                                                    onClick={() => openLightbox(att.url)} 
+                                                    alt="attachment" 
+                                                />
                                             ))}
                                         </div>
                                     )}

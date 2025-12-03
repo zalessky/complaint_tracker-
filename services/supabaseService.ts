@@ -3,43 +3,28 @@ import { Ticket, TicketStatus, ChatMessage, Attachment } from '../types';
 import { MOCK_TICKETS } from '../constants';
 
 let supabase: SupabaseClient | null = null;
-
-// TODO: Set this to your deployed Render URL
-const BOT_PROXY_URL = "https://YOUR_BOT_APP.onrender.com"; 
+let BOT_URL = localStorage.getItem('BOT_URL') || '';
 
 export const initSupabase = (url: string, key: string) => {
   supabase = createClient(url, key);
 };
 
-export const isSupabaseConfigured = () => !!supabase;
-
-export const uploadFile = async (file: File): Promise<string> => {
-    if (!supabase) throw new Error("Supabase not configured");
-    
-    const filename = `${Date.now()}_${file.name}`;
-    const { data, error } = await supabase.storage
-        .from('replies')
-        .upload(filename, file);
-
-    if (error) throw error;
-    
-    const { data: { publicUrl } } = supabase.storage
-        .from('replies')
-        .getPublicUrl(filename);
-        
-    return publicUrl;
+export const setBotUrl = (url: string) => {
+    BOT_URL = url.replace(/\/$/, ""); // remove trailing slash
+    localStorage.setItem('BOT_URL', BOT_URL);
 };
+
+export const getBotUrl = () => BOT_URL;
+
+export const isSupabaseConfigured = () => !!supabase;
 
 // Map DB row to Frontend Ticket
 const mapRowToTicket = (row: any): Ticket => {
-  // Logic to handle images:
-  // 1. If it's a URL (http...), use it directly (Mock data or Operator uploads)
-  // 2. If it's a file_id (no http), construct Proxy URL
-  
   const mapPhoto = (idOrUrl: string, idx: number) => {
       let url = idOrUrl;
-      if (!url.startsWith('http')) {
-          url = `${BOT_PROXY_URL}/images/${idOrUrl}`;
+      // If it looks like a file_id (no http), use proxy
+      if (url && !url.startsWith('http')) {
+          url = `${BOT_URL}/images/${idOrUrl}`;
       }
       return {
         id: `ph-${idx}`,
@@ -97,13 +82,41 @@ export const fetchTicketHistory = async (ticketId: string): Promise<ChatMessage[
         sender: msg.sender,
         text: msg.message_text,
         timestamp: msg.created_at,
-        attachments: (msg.attachments || []).map((url: string, idx: number) => ({
-             id: `att-${idx}`,
-             type: 'image',
-             url: url,
-             name: 'Вложение'
-        }))
+        attachments: (msg.attachments || []).map((idOrUrl: string, idx: number) => {
+             let url = idOrUrl;
+             if (url && !url.startsWith('http')) {
+                 url = `${BOT_URL}/images/${idOrUrl}`;
+             }
+             return {
+                 id: `att-${idx}`,
+                 type: 'image',
+                 url: url,
+                 name: 'Вложение'
+             };
+        })
     }));
+};
+
+// Send reply using the Python Bot API (to avoid Supabase storage)
+export const sendReplyViaBot = async (ticketId: string, text: string, file?: File) => {
+    if (!BOT_URL) throw new Error("Bot URL not configured");
+    
+    const formData = new FormData();
+    formData.append('ticket_id', ticketId);
+    formData.append('text', text);
+    if (file) {
+        formData.append('file', file);
+    }
+    
+    const response = await fetch(`${BOT_URL}/api/reply`, {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Bot API Error: ${err}`);
+    }
 };
 
 export const updateTicketStatus = async (id: string, status: string) => {
@@ -121,28 +134,21 @@ export const softDeleteTicket = async (id: string) => {
     return await supabase.from('complaints').update({ is_deleted: true }).eq('id', id);
 };
 
-export const sendOperatorMessage = async (ticketId: string, text: string, attachments: string[] = []) => {
-    if (!supabase) throw new Error("Supabase not configured");
-    
-    await supabase.from('ticket_messages').insert({
-        ticket_id: ticketId,
-        sender: 'operator',
-        message_text: text,
-        attachments: attachments
-    });
-
-    await supabase.from('complaints').update({ status: 'in_work' }).eq('id', ticketId);
-};
-
 export const clearDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
+    // Delete messages first to satisfy FK
     await supabase.from('ticket_messages').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    // Then complaints
     const { error } = await supabase.from('complaints').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
     if (error) throw new Error(error.message);
 };
 
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
+    
+    // Clear first to avoid dupes
+    await clearDatabase();
+
     const rows = MOCK_TICKETS.map(t => ({
         user_id: parseInt(t.telegramUserId) || 12345,
         username: t.telegramUsername,
