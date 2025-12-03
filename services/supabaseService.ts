@@ -1,3 +1,4 @@
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Ticket, TicketStatus, ChatMessage, Attachment } from '../types';
 import { MOCK_TICKETS } from '../constants';
@@ -23,8 +24,11 @@ const mapRowToTicket = (row: any): Ticket => {
   const mapPhoto = (idOrUrl: string, idx: number) => {
       let url = idOrUrl;
       // If it looks like a file_id (no http), use proxy
-      if (url && !url.startsWith('http')) {
+      if (url && !url.startsWith('http') && BOT_URL) {
           url = `${BOT_URL}/images/${idOrUrl}`;
+      } else if (url && !url.startsWith('http') && !BOT_URL) {
+          // Placeholder if Bot URL is missing
+          url = `https://placehold.co/600x400?text=Setup+Bot+URL`; 
       }
       return {
         id: `ph-${idx}`,
@@ -84,7 +88,7 @@ export const fetchTicketHistory = async (ticketId: string): Promise<ChatMessage[
         timestamp: msg.created_at,
         attachments: (msg.attachments || []).map((idOrUrl: string, idx: number) => {
              let url = idOrUrl;
-             if (url && !url.startsWith('http')) {
+             if (url && !url.startsWith('http') && BOT_URL) {
                  url = `${BOT_URL}/images/${idOrUrl}`;
              }
              return {
@@ -99,7 +103,7 @@ export const fetchTicketHistory = async (ticketId: string): Promise<ChatMessage[
 
 // Send reply using the Python Bot API (to avoid Supabase storage)
 export const sendReplyViaBot = async (ticketId: string, text: string, file?: File) => {
-    if (!BOT_URL) throw new Error("Bot URL not configured");
+    if (!BOT_URL) throw new Error("Bot URL not configured in Integration settings");
     
     const formData = new FormData();
     formData.append('ticket_id', ticketId);
@@ -146,7 +150,6 @@ export const clearDatabase = async () => {
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    // Clear first to avoid dupes
     await clearDatabase();
 
     const rows = MOCK_TICKETS.map(t => ({

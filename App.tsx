@@ -36,8 +36,6 @@ const App: React.FC = () => {
             setTickets(liveTickets);
           } else {
              console.log("DB connected but empty");
-             // If empty, we keep MOCK_TICKETS initially until user seeds DB
-             // setTickets([]); 
           }
           
           setIsLiveMode(true); 
@@ -62,7 +60,6 @@ const App: React.FC = () => {
           if (errorMsg.includes('is_deleted') || errorMsg.includes('does not exist')) {
              setNotification("Требуется обновление БД! Запустите SQL скрипт.");
           } else {
-             // Suppress console spam for expected auth errors if keys are invalid
              if(!errorMsg.includes('apikey')) {
                  setNotification(`Ошибка подключения: ${errorMsg}`);
              }
@@ -127,6 +124,7 @@ const App: React.FC = () => {
       id: `t-${Date.now()}`,
       telegramUserId: '12345',
       telegramUsername: '@demo_user',
+      contactPhone: '+79990000000',
       category: 'Дороги',
       subCategory: 'Яма',
       originalMessage: 'Тестовая заявка (Демо)',
@@ -162,7 +160,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
             {getHeaderIcon()}
             <h1 className="text-xl font-bold text-slate-800">
-              {currentView === 'dashboard' && 'Городской Помощник v0.9.10'}
+              {currentView === 'dashboard' && 'Городской Помощник v0.9.16'}
               {currentView === 'integration' && 'Администрирование'}
               {currentView === 'analytics' && 'Аналитика'}
             </h1>
