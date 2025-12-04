@@ -4,14 +4,16 @@ import { IntegrationView } from './components/IntegrationView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { Sidebar } from './components/Sidebar';
 import { MapView } from './components/MapView';
+import { TicketModal } from './components/TicketModal';
 import { Ticket, ViewMode } from './types';
-import { LayoutDashboard, Database, BarChart2, Users, Map, Book, Mail } from 'lucide-react';
+import { LayoutDashboard, Database, BarChart2, Users, Map as MapIcon, Book, Mail } from 'lucide-react';
 import { MOCK_TICKETS } from './constants';
 import { initSupabase, fetchTickets, subscribeToTickets, updateTicketStatus, seedDatabase, clearDatabase } from './services/supabaseService';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLiveMode, setIsLiveMode] = useState(false);
@@ -117,7 +119,7 @@ const App: React.FC = () => {
       case 'integration': return <Database className="text-emerald-500 w-6 h-6" />;
       case 'analytics': return <BarChart2 className="text-amber-500 w-6 h-6" />;
       case 'staff': return <Users className="text-blue-500 w-6 h-6" />;
-      case 'map': return <Map className="text-purple-500 w-6 h-6" />;
+      case 'map': return <MapIcon className="text-purple-500 w-6 h-6" />;
       case 'knowledge': return <Book className="text-pink-500 w-6 h-6" />;
       case 'mail': return <Mail className="text-cyan-500 w-6 h-6" />;
       default: return <LayoutDashboard className="text-indigo-600 w-6 h-6" />;
@@ -136,6 +138,8 @@ const App: React.FC = () => {
           default: return 'Городской Помощник';
       }
   };
+
+  const selectedTicket = tickets.find(t => t.id === selectedTicketId);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900">
@@ -170,13 +174,18 @@ const App: React.FC = () => {
 
         <div className="flex-1 overflow-hidden relative">
           {currentView === 'dashboard' ? (
-            <KanbanBoard tickets={tickets} onUpdateTicket={handleUpdateTicket} isLiveMode={isLiveMode} />
+            <KanbanBoard 
+                tickets={tickets} 
+                onUpdateTicket={handleUpdateTicket} 
+                onTicketSelect={(id) => setSelectedTicketId(id)}
+                isLiveMode={isLiveMode} 
+            />
           ) : currentView === 'integration' ? (
             <IntegrationView onConnect={connectToSupabase} isConnected={isLiveMode} isLoading={isLoading} onSeedData={handleSeedData} onClearData={handleClearData} />
           ) : currentView === 'analytics' ? (
             <AnalyticsView tickets={tickets} />
           ) : currentView === 'map' ? (
-            <MapView tickets={tickets} />
+            <MapView tickets={tickets} onTicketSelect={(id) => setSelectedTicketId(id)} />
           ) : currentView === 'staff' ? (
              <div className="p-10 text-center text-slate-400"><Users size={48} className="mx-auto mb-4 opacity-50"/><h2 className="text-xl font-bold mb-2">Управление персоналом</h2><p>Функционал в разработке.</p></div>
           ) : currentView === 'knowledge' ? (
@@ -186,6 +195,15 @@ const App: React.FC = () => {
           ) : null}
         </div>
       </main>
+
+      {/* Global Ticket Modal */}
+      {selectedTicket && (
+        <TicketModal
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicketId(null)}
+          onUpdate={handleUpdateTicket}
+        />
+      )}
     </div>
   );
 };

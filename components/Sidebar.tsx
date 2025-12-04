@@ -39,43 +39,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         : 'text-slate-400 hover:bg-slate-800 hover:text-white'
     }`;
 
-  // Engels Flag SVG (Official Construction)
-  // Vertical Blue Stripe (1/3), Yellow Field (2/3), Bull symbol in center of yellow
-  const FlagLogo = () => (
-    <svg viewBox="0 0 90 60" className="w-8 h-8 drop-shadow-md rounded-sm overflow-hidden border border-white/10">
-      {/* Yellow Field */}
-      <rect x="30" y="0" width="60" height="60" fill="#fce300" />
-      {/* Blue Stripe */}
-      <rect x="0" y="0" width="30" height="60" fill="#0077ff" />
-      
-      {/* Bull Symbol (Simplified for small size) */}
-      <g transform="translate(60, 30) scale(0.35)">
-         <path d="M -30 10 Q -20 0 -10 10 Q 0 0 20 0 Q 30 -10 40 0 C 45 10 35 20 30 25 L 30 40 L 20 40 L 25 20 L 10 30 L 10 45 L 0 45 L 0 30 Q -10 35 -20 30 L -20 45 L -30 45 L -30 30 Q -40 30 -40 20 Z" fill="#1a1a1a" transform="translate(0, 10)" />
-         {/* Bowl */}
-         <path d="M -20 -10 L 20 -10 C 20 5 10 10 0 10 C -10 10 -20 5 -20 -10 Z" fill="#bc002d" />
-         <ellipse cx="0" cy="-10" rx="20" ry="5" fill="#fff" />
-      </g>
-    </svg>
-  );
-
   return (
     <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 text-white flex flex-col h-full shrink-0 transition-all duration-300 relative z-20`}>
       
       {/* Header */}
       <div className={`p-4 border-b border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
         <div className="shrink-0 transition-transform hover:scale-105">
-          <FlagLogo />
+          <img src="/components/Flag_of_Engels.svg" alt="Engels Flag" className="w-12 h-8 rounded-sm shadow-md" />
         </div>
         {!isCollapsed && (
             <div className="animate-in fade-in duration-300 overflow-hidden">
-                <h2 className="font-bold text-sm leading-tight tracking-tight whitespace-nowrap">ЭнгельсHelpDesk</h2>
+                <h2 className="font-bold text-xl leading-tight tracking-tight whitespace-nowrap text-white">ЭнгельсHelpDesk</h2>
                 <div className="flex items-center gap-1.5 mt-1">
                     {isLiveMode ? (
-                        <span className="flex items-center gap-1 text-[9px] font-bold uppercase text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
-                            <Wifi size={8} /> Live
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
+                            <Wifi size={10} /> Live
                         </span>
                     ) : (
-                        <span className="flex items-center gap-1 text-[9px] font-bold uppercase text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
                             Offline
                         </span>
                     )}
@@ -164,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
         {!isCollapsed && (
             <div className="text-center mt-2 text-[10px] text-slate-600 font-mono">
-                v0.9.24
+                v0.9.26
             </div>
         )}
       </div>

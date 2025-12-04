@@ -178,16 +178,14 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
   };
 
   // Helper for Maps
-  // Checks if location string matches "lat,lon" pattern
   const getMapUrl = (loc?: string) => {
       if (!loc) return null;
-      // Regex for lat,lon (e.g. 51.49,46.11)
+      // Strict Check for "lat,lon" (e.g. 51.49,46.11)
       const coordMatch = loc.match(/^(\d+(\.\d+)?),\s*(\d+(\.\d+)?)$/);
       if (coordMatch) {
           const lat = coordMatch[1];
           const lon = coordMatch[3];
-          // Yandex Static Map URL
-          // l=map (scheme), z=15 (zoom), pt=lon,lat,pm2rdm (marker)
+          // Yandex Static Map URL. Order is lon,lat for 'pt' and 'll'
           return `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&pt=${lon},${lat},pm2rdm&size=350,150`;
       }
       return null;

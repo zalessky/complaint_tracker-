@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Ticket, TicketStatus, Priority } from '../types';
 import { TicketCard } from './TicketCard';
-import { TicketModal } from './TicketModal';
 import { CATEGORIES, STATUS_CONFIG, PRIORITY_LABELS } from '../constants';
 import { ArrowUpDown, Filter, CheckSquare, Square } from 'lucide-react';
 
 interface KanbanBoardProps {
   tickets: Ticket[];
   onUpdateTicket: (ticket: Ticket) => void;
+  onTicketSelect: (id: string) => void;
   isLiveMode?: boolean;
 }
 
@@ -37,8 +36,7 @@ const CATEGORY_COLUMNS = Object.entries(CATEGORIES).map(([key, val]) => ({
     dot: 'bg-slate-400'
 }));
 
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tickets, onUpdateTicket, isLiveMode }) => {
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tickets, onUpdateTicket, onTicketSelect, isLiveMode }) => {
   const [grouping, setGrouping] = useState<GroupingMode>('status');
   const [sortBy, setSortBy] = useState<SortMode>('date_desc');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -55,8 +53,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tickets, onUpdateTicke
     
     setVisibleColumns(new Set(allIds));
   }, [grouping]);
-
-  const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null;
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -228,7 +224,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tickets, onUpdateTicke
                     <TicketCard
                         key={ticket.id}
                         ticket={ticket}
-                        onClick={() => setSelectedTicketId(ticket.id)}
+                        onClick={() => onTicketSelect(ticket.id)}
                     />
                     ))}
                 {columnTickets.length === 0 && (
@@ -241,14 +237,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ tickets, onUpdateTicke
           );
         })}
       </div>
-
-      {selectedTicket && (
-        <TicketModal
-          ticket={selectedTicket}
-          onClose={() => setSelectedTicketId(null)}
-          onUpdate={onUpdateTicket}
-        />
-      )}
     </div>
   );
 };
