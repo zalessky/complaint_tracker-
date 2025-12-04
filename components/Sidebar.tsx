@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ViewMode } from '../types';
 import { 
@@ -14,6 +15,9 @@ import {
   Mail,
   Wifi
 } from 'lucide-react';
+
+// Direct reference to the file in the public directory structure
+const flagLogo = '/components/Flag_of_Engels.svg';
 
 interface SidebarProps {
   currentView: ViewMode;
@@ -43,13 +47,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 text-white flex flex-col h-full shrink-0 transition-all duration-300 relative z-20`}>
       
       {/* Header */}
-      <div className={`p-4 border-b border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+      <div className={`p-4 border-b border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
         <div className="shrink-0 transition-transform hover:scale-105">
-          <img src="/components/Flag_of_Engels.svg" alt="Engels Flag" className="w-12 h-8 rounded-sm shadow-md" />
+          <img src={flagLogo} alt="Engels Flag" className="w-10 h-auto rounded-sm shadow-md" />
         </div>
         {!isCollapsed && (
             <div className="animate-in fade-in duration-300 overflow-hidden">
-                <h2 className="font-bold text-xl leading-tight tracking-tight whitespace-nowrap text-white">ЭнгельсHelpDesk</h2>
+                <h2 className="font-bold text-lg leading-tight tracking-tight whitespace-nowrap text-white">ЭнгельсHelpDesk</h2>
                 <div className="flex items-center gap-1.5 mt-1">
                     {isLiveMode ? (
                         <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
@@ -145,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
         {!isCollapsed && (
             <div className="text-center mt-2 text-[10px] text-slate-600 font-mono">
-                v0.9.26
+                v0.10.2
             </div>
         )}
       </div>

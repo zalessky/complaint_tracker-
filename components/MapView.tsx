@@ -92,7 +92,8 @@ export const MapView: React.FC<MapViewProps> = ({ tickets, onTicketSelect }) => 
               </div>
           ) : (
               <>
-                <div className="flex-1 bg-slate-100 relative flex items-center justify-center bg-[url('https://static-maps.yandex.ru/1.x/?l=map&ll=46.12,51.50&z=12&size=650,450')] bg-cover bg-center grayscale opacity-50">
+                {/* Full color map, no filters */}
+                <div className="flex-1 bg-slate-100 relative flex items-center justify-center bg-[url('https://static-maps.yandex.ru/1.x/?l=map&ll=46.12,51.50&z=12&size=650,450')] bg-cover bg-center">
                     {mapUrl && (
                         <img 
                             src={mapUrl} 
