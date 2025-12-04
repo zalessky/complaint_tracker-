@@ -21,7 +21,9 @@ interface IntegrationViewProps {
 }
 
 export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isConnected, isLoading, onSeedData }) => {
-  const [proxyUrl, setProxyUrl] = useState('');
+  // Initialize directly from localStorage to prevent empty state flash
+  const [proxyUrl, setProxyUrl] = useState(() => localStorage.getItem('BOT_URL') || getBotUrl() || '');
+  
   const [dbUrl, setDbUrl] = useState("https://zjfgvvzyiutosaiuljuk.supabase.co");
   const [dbKey, setDbKey] = useState("sb_publishable_iWKnzCb6R9iBI4KYYUZzww_-1qFPgn3");
   const [showKey, setShowKey] = useState(false);
@@ -29,12 +31,10 @@ export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isC
   const [activeFile, setActiveFile] = useState<keyof typeof FILES>('main.py');
 
   useEffect(() => {
-      // Force read from localStorage to ensure we get the persisted value
-      const storedUrl = localStorage.getItem('BOT_URL');
-      if (storedUrl) {
-          setProxyUrl(storedUrl);
-      } else {
-          setProxyUrl(getBotUrl());
+      // Also sync if service updates independently
+      const current = getBotUrl();
+      if (current && current !== proxyUrl) {
+          setProxyUrl(current);
       }
   }, []);
 
@@ -95,16 +95,6 @@ export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isC
         {/* Supabase & Data Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Key className="text-emerald-600"/> Данные</h3>
-                <div className="space-y-4">
-                     <button onClick={onSeedData} disabled={!isConnected || isLoading} className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm">
-                        {isLoading ? 'Генерация...' : '🎲 Генерация Big Data (50+ заявок)'}
-                     </button>
-                     <p className="text-xs text-slate-500 text-center">Генерирует заявки с историей, фото и разными статусами.</p>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Globe className="text-blue-600"/> Настройки Прокси</h3>
                 <div className="flex gap-2">
                     <input 
@@ -119,6 +109,19 @@ export const IntegrationView: React.FC<IntegrationViewProps> = ({ onConnect, isC
                 </div>
                 <p className="text-xs text-slate-500 mt-2">Укажите URL задеплоенного бота (Render/Koyeb) для работы картинок.</p>
             </div>
+
+            {/* Hidden Seed Button Section as requested */}
+            {false && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 opacity-50 grayscale pointer-events-none">
+                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Key className="text-emerald-600"/> Данные</h3>
+                <div className="space-y-4">
+                     <button onClick={onSeedData} disabled={!isConnected || isLoading} className="w-full bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm">
+                        {isLoading ? 'Генерация...' : '🎲 Генерация Big Data (50+ заявок)'}
+                     </button>
+                     <p className="text-xs text-slate-500 text-center">Генерирует заявки с историей, фото и разными статусами.</p>
+                </div>
+            </div>
+            )}
         </div>
 
         {/* Code Viewer Section */}

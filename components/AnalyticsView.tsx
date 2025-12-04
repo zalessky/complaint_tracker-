@@ -71,6 +71,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ tickets }) => {
       hour: i,
       count: filteredTickets.filter(t => new Date(t.createdAt).getHours() === i).length
   }));
+  const maxHour = Math.max(...activityByHour.map(i => i.count), 1); // For scaling
 
   // Activity by Day
   const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
@@ -78,6 +79,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ tickets }) => {
       day: days[i],
       count: filteredTickets.filter(t => new Date(t.createdAt).getDay() === i).length
   }));
+  // Ensure we scale relative to the highest visible bar, with a minimum of 1 to avoid /0
+  const maxDay = Math.max(...activityByDay.map(i => i.count), 1); 
 
   // Top Users
   const userCounts: Record<string, number> = {};
@@ -199,14 +202,14 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ tickets }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide flex items-center gap-2"><Clock size={16}/> Активность по часам</h3>
-                <div className="flex items-end h-40 gap-1">
+                <div className="flex items-end h-40 gap-1 border-b border-slate-100 pb-2">
                     {activityByHour.map((h) => (
-                        <div key={h.hour} className="flex-1 bg-indigo-50 hover:bg-indigo-200 rounded-t transition-colors relative group" style={{ height: `${h.count > 0 ? (h.count / 10) * 100 : 5}%` }}>
-                            <div className="absolute bottom-0 left-0 right-0 top-0 flex items-end justify-center pb-1">
-                                {h.hour % 6 === 0 && <span className="text-[9px] text-slate-400">{h.hour}</span>}
+                        <div key={h.hour} className="flex-1 bg-indigo-500 hover:bg-indigo-600 rounded-t transition-colors relative group" style={{ height: `${(h.count / maxHour) * 100}%` }}>
+                            <div className="absolute bottom-0 left-0 right-0 top-0 flex items-end justify-center pb-1 pointer-events-none">
+                                {h.hour % 6 === 0 && <span className="text-[9px] text-white opacity-50 absolute bottom-1">{h.hour}</span>}
                             </div>
                             <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
-                                {h.count} заявок
+                                {h.count}
                             </div>
                         </div>
                     ))}
@@ -215,10 +218,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ tickets }) => {
 
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                 <h3 className="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide flex items-center gap-2"><Calendar size={16}/> Активность по дням</h3>
-                <div className="flex items-end h-40 gap-3">
+                <div className="flex items-end h-40 gap-3 border-b border-slate-100 pb-2">
                     {activityByDay.map((d) => (
                         <div key={d.day} className="flex-1 flex flex-col justify-end group">
-                            <div className="w-full bg-emerald-100 hover:bg-emerald-300 rounded-t transition-colors relative" style={{ height: `${(d.count / 15) * 100}%`, minHeight: '4px' }}>
+                            <div className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-t transition-colors relative shadow-sm" style={{ height: `${(d.count / maxDay) * 100}%`, minHeight: d.count > 0 ? '4px' : '0' }}>
                                 <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-1 rounded opacity-0 group-hover:opacity-100">
                                     {d.count}
                                 </div>
