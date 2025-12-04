@@ -1,7 +1,6 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Ticket, TicketStatus, ChatMessage, Attachment } from '../types';
-import { MOCK_TICKETS } from '../constants';
+import { Ticket, TicketStatus, ChatMessage, Attachment, Priority } from '../types';
+import { MOCK_TICKETS, CATEGORIES, STATUS_CONFIG } from '../constants';
 
 let supabase: SupabaseClient | null = null;
 let BOT_URL = localStorage.getItem('BOT_URL') || '';
@@ -101,7 +100,6 @@ export const fetchTicketHistory = async (ticketId: string): Promise<ChatMessage[
     }));
 };
 
-// Send reply using the Python Bot API (to avoid Supabase storage)
 export const sendReplyViaBot = async (ticketId: string, text: string, file?: File) => {
     if (!BOT_URL) throw new Error("Bot URL not configured in Integration settings");
     
@@ -147,28 +145,94 @@ export const clearDatabase = async () => {
     if (error) throw new Error(error.message);
 };
 
+// --- MASSIVE SEEDER (50+) ---
+const getRandomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const uuidv4 = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+});
+
 export const seedDatabase = async () => {
     if (!supabase) throw new Error("Supabase not configured");
     
-    await clearDatabase();
+    await clearDatabase(); // Wipe clean first
 
-    const rows = MOCK_TICKETS.map(t => ({
-        user_id: parseInt(t.telegramUserId) || 12345,
-        username: t.telegramUsername,
-        contact_phone: t.contactPhone,
-        category: t.category,
-        sub_category: t.subCategory,
-        location: t.location,
-        description: t.originalMessage,
-        extra_data: t.extraData,
-        photos: t.attachments.map(a => a.url),
-        status: t.status,
-        priority: t.priority,
-        is_deleted: false,
-        created_at: t.createdAt
-    }));
-    const { error } = await supabase.from('complaints').insert(rows);
+    const USERNAMES = ["@ivan_citizen", "@anna_engels", "@driver_164", "@mom_of_3", "@active_resident", "@sergey_k", "@olga_v", "@zkh_hater", "@love_engels", "@angry_bird", "@city_watcher", "@taxi_driver", "@student_sgu"];
+    const CAT_KEYS = Object.keys(CATEGORIES).filter(k => k !== 'feedback' && k !== 'gratitude');
+
+    const MOCK_DATA: any[] = [];
+    const MESSAGES_DATA: any[] = [];
+
+    // Engels Coordinates Bounding Box (Approx)
+    const LAT_MIN = 51.45, LAT_MAX = 51.52;
+    const LON_MIN = 46.08, LON_MAX = 46.15;
+
+    // Generate 50 tickets
+    for (let i = 0; i < 50; i++) {
+        const catKey = getRandomElement(CAT_KEYS) as keyof typeof CATEGORIES;
+        const cat = CATEGORIES[catKey];
+        const sub = getRandomElement(cat.subs);
+        const status = getRandomElement(Object.keys(STATUS_CONFIG));
+        const priority = getRandomElement(['low', 'medium', 'high', 'critical']);
+        const ticketId = uuidv4();
+        
+        // Random Coordinate in Engels
+        const lat = (Math.random() * (LAT_MAX - LAT_MIN) + LAT_MIN).toFixed(6);
+        const lon = (Math.random() * (LON_MAX - LON_MIN) + LON_MIN).toFixed(6);
+        const location = `${lat},${lon}`; // Format compatible with Yandex Map logic
+
+        // Picsum Image Seed (Unique per ticket)
+        const imgUrl = `https://picsum.photos/seed/${ticketId}/800/600`;
+
+        const complaint = {
+            id: ticketId,
+            user_id: 100000 + i,
+            username: getRandomElement(USERNAMES),
+            contact_phone: `+79${Math.floor(100000000 + Math.random() * 900000000)}`,
+            category: cat.name,
+            sub_category: sub,
+            location: location,
+            description: `Автоматическая заявка №${i+1}. Обнаружена проблема: ${sub}. Прошу принять меры в кратчайшие сроки.`,
+            extra_data: catKey === 'transport' ? { routeNumber: `${Math.floor(Math.random()*100)}`, vehicleNumber: 'А000АА164' } : null,
+            photos: [imgUrl],
+            status: status,
+            priority: priority,
+            is_deleted: false,
+            created_at: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString()
+        };
+        MOCK_DATA.push(complaint);
+
+        // Generate History
+        if (status !== 'new') {
+            MESSAGES_DATA.push({
+                ticket_id: ticketId,
+                sender: 'operator',
+                message_text: 'Здравствуйте. Ваша заявка принята в работу.',
+                attachments: [],
+                is_sent_to_telegram: true,
+                created_at: new Date(Date.now() - Math.random() * 1000000).toISOString()
+            });
+
+            if (status === 'resolved') {
+                 MESSAGES_DATA.push({
+                    ticket_id: ticketId,
+                    sender: 'operator',
+                    message_text: 'Работы выполнены в полном объеме. Спасибо за обращение.',
+                    attachments: [`https://picsum.photos/seed/${ticketId}_done/800/600`],
+                    is_sent_to_telegram: true,
+                    created_at: new Date().toISOString()
+                });
+            }
+        }
+    }
+
+    const { error } = await supabase.from('complaints').insert(MOCK_DATA);
     if (error) throw error;
+
+    if (MESSAGES_DATA.length > 0) {
+        const { error: msgError } = await supabase.from('ticket_messages').insert(MESSAGES_DATA);
+        if (msgError) throw msgError;
+    }
 };
 
 export const subscribeToTickets = (callback: (payload: any) => void) => {

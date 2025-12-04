@@ -1,9 +1,6 @@
+export type ViewMode = 'dashboard' | 'integration' | 'analytics' | 'staff' | 'map' | 'knowledge' | 'mail';
 
-export type ViewMode = 'dashboard' | 'integration' | 'analytics';
-
-// Statuses based on Color Coded specs: 
-// new (Новое), in_work (В работе), clarification_needed (Уточнение), 
-// resolved (Решено), measures_taken (Приняты меры), not_confirmed (Не подтвердилось), rejected (Отклонено)
+// Statuses based on Color Coded specs
 export type TicketStatus = 
   | 'new' 
   | 'in_work' 
@@ -64,10 +61,20 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface AnalyticsMetric {
+    label: string;
+    value: string | number;
+    subtext?: string;
+    trend?: string;
+    trendType?: 'positive' | 'negative' | 'neutral';
+    icon?: any;
+    color?: string;
+}
+
 export interface GeminiAnalysisResult {
-  summary: string;
-  category: string;
-  priority: Priority;
-  sentiment: 'negative' | 'neutral' | 'positive';
-  suggestedResponse: string;
+    summary: string;
+    category: string;
+    priority: Priority;
+    sentiment: 'negative' | 'neutral' | 'positive';
+    suggestedResponse: string;
 }

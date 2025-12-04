@@ -177,6 +177,24 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
       setLightboxIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
   };
 
+  // Helper for Maps
+  // Checks if location string matches "lat,lon" pattern
+  const getMapUrl = (loc?: string) => {
+      if (!loc) return null;
+      // Regex for lat,lon (e.g. 51.49,46.11)
+      const coordMatch = loc.match(/^(\d+(\.\d+)?),\s*(\d+(\.\d+)?)$/);
+      if (coordMatch) {
+          const lat = coordMatch[1];
+          const lon = coordMatch[3];
+          // Yandex Static Map URL
+          // l=map (scheme), z=15 (zoom), pt=lon,lat,pm2rdm (marker)
+          return `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&pt=${lon},${lat},pm2rdm&size=350,150`;
+      }
+      return null;
+  };
+
+  const mapUrl = getMapUrl(ticket.location);
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       {/* Lightbox Overlay */}
@@ -310,7 +328,7 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                 )}
             </div>
 
-            {/* Applicant Details */}
+            {/* Applicant Details & Map */}
             <div className="space-y-3">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Данные заявителя</label>
                 
@@ -322,6 +340,15 @@ export const TicketModal: React.FC<TicketModalProps> = ({ ticket, onClose, onUpd
                             <div className="text-[10px] text-slate-500">ID: {ticket.telegramUserId}</div>
                         </div>
                     </div>
+                    
+                    {/* Yandex Map Preview */}
+                    {mapUrl && (
+                        <div className="w-full h-[150px] relative bg-slate-100 border-b border-slate-100">
+                            <img src={mapUrl} alt="Map" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 ring-1 ring-inset ring-black/5 pointer-events-none"></div>
+                        </div>
+                    )}
+
                     <div className="p-3 space-y-2 bg-slate-50/50">
                         {ticket.contactPhone && (
                              <div className="flex items-center gap-2 text-sm text-slate-700">
