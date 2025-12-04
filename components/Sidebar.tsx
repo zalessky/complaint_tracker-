@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ViewMode } from '../types';
 import { 
@@ -16,9 +15,6 @@ import {
   Wifi
 } from 'lucide-react';
 
-// Direct reference to the file in the public directory structure
-const flagLogo = '/components/Flag_of_Engels.svg';
-
 interface SidebarProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
@@ -27,6 +23,16 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
+
+const EngelsLogo = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 60" className="w-10 h-auto shadow-md rounded-sm">
+    <rect fill="#ffc600" width="90" height="60"/>
+    <rect fill="#0076B8" width="45" height="60"/>
+    <polygon points="30,0 46.6654,0 60,30 46.6654,60 30,60"/>
+    <polygon fill="#de2118" points="16.6654,0 31.6654,0 45,30 31.6654,60 16.6654,60 30,30"/>
+    <polygon fill="#fff" points="10,30 20,7.5 30,30 20,52.5"/>
+  </svg>
+);
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
     currentView, 
@@ -47,13 +53,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 text-white flex flex-col h-full shrink-0 transition-all duration-300 relative z-20`}>
       
       {/* Header */}
-      <div className={`p-4 border-b border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
+      <div className={`p-4 border-b border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
         <div className="shrink-0 transition-transform hover:scale-105">
-          <img src={flagLogo} alt="Engels Flag" className="w-10 h-auto rounded-sm shadow-md" />
+          <EngelsLogo />
         </div>
         {!isCollapsed && (
             <div className="animate-in fade-in duration-300 overflow-hidden">
-                <h2 className="font-bold text-lg leading-tight tracking-tight whitespace-nowrap text-white">ЭнгельсHelpDesk</h2>
+                <h2 className="font-bold text-[15px] leading-tight tracking-tight whitespace-nowrap text-white">ЭнгельсHelpDesk</h2>
                 <div className="flex items-center gap-1.5 mt-1">
                     {isLiveMode ? (
                         <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
@@ -81,9 +87,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && <span>Доска заявок</span>}
         </button>
 
-        <button onClick={() => onViewChange('map')} className={navItemClass(currentView === 'map')} title="Карта проблем">
+        <button onClick={() => onViewChange('map')} className={navItemClass(currentView === 'map')} title="Карта событий">
           <Map size={18} className="shrink-0" />
-          {!isCollapsed && <span>Карта проблем</span>}
+          {!isCollapsed && <span>Карта событий</span>}
         </button>
 
         <button onClick={() => onViewChange('analytics')} className={navItemClass(currentView === 'analytics')} title="Аналитика">
@@ -149,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
         {!isCollapsed && (
             <div className="text-center mt-2 text-[10px] text-slate-600 font-mono">
-                v0.10.2
+                v0.10.3
             </div>
         )}
       </div>

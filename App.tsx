@@ -132,7 +132,7 @@ const App: React.FC = () => {
           case 'integration': return 'Настройки и Интеграция';
           case 'analytics': return 'Аналитический центр';
           case 'staff': return 'Управление персоналом';
-          case 'map': return 'Карта проблем';
+          case 'map': return 'Карта событий';
           case 'knowledge': return 'База знаний';
           case 'mail': return 'Рассылки';
           default: return 'Городской Помощник';
